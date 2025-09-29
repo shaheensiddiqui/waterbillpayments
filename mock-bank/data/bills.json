@@ -26,8 +26,10 @@
     "base_amount": 700,
     "penalty_amount": 50,
     "total_amount": 750,
-    "status": "EXPIRED",
-    "bank_ref": "BNKREF67890"
+    "status": "PAID",
+    "bank_ref": "BNKREF67890",
+    "payment_ref": "5114921029323",
+    "paid_at": "2025-09-28T21:48:21.136Z"
   },
   "WB-2025-0003": {
     "bill_number": "WB-2025-0003",
@@ -42,5 +44,79 @@
     "total_amount": 600,
     "status": "PAID",
     "bank_ref": "BNKREF24680"
+  },
+  "WB-2025-0004": {
+    "bill_number": "WB-2025-0004",
+    "consumer_name": "Priya Singh",
+    "email": "priya@example.com",
+    "address": "89, Park Street, Kolkata",
+    "service_period_start": "2025-05-01",
+    "service_period_end": "2025-05-31",
+    "due_date": "2025-06-15",
+    "base_amount": 600,
+    "penalty_amount": 0,
+    "total_amount": 600,
+    "status": "PAID",
+    "bank_ref": "BNKREF24680",
+    "payment_ref": "5114921029982",
+    "paid_at": "2025-09-28T21:48:52.150Z"
+  },
+  "WB-2025-0005": {
+    "bill_number": "WB-2025-0005",
+    "consumer_name": "Shaheen Siddiqui",
+    "email": "priya@example.com",
+    "address": "89, Park Street, Kolkata",
+    "service_period_start": "2025-05-01",
+    "service_period_end": "2025-05-31",
+    "due_date": "2025-06-15",
+    "base_amount": 600,
+    "penalty_amount": 0,
+    "total_amount": 600,
+    "status": "UNPAID",
+    "bank_ref": "BNKREF24680"
+  },
+  "WB-2025-0006": {
+    "bill_number": "WB-2025-0006",
+    "consumer_name": "Shine Siddiqui",
+    "email": "priya@example.com",
+    "address": "89, Park Street, Kolkata",
+    "service_period_start": "2025-05-01",
+    "service_period_end": "2025-05-31",
+    "due_date": "2025-06-15",
+    "base_amount": 600,
+    "penalty_amount": 0,
+    "total_amount": 600,
+    "status": "UNPAID",
+    "bank_ref": "BNKREF24680"
+  },
+  "WB-2025-0007": {
+    "bill_number": "WB-2025-0006",
+    "consumer_name": "Siddiqui",
+    "email": "priya@example.com",
+    "address": "89, Park Street, Kolkata",
+    "service_period_start": "2025-05-01",
+    "service_period_end": "2025-05-31",
+    "due_date": "2025-06-15",
+    "base_amount": 600,
+    "penalty_amount": 0,
+    "total_amount": 600,
+    "status": "UNPAID",
+    "bank_ref": "BNKREF24680"
+  },
+  "WB-2025-0008": {
+    "bill_number": "WB-2025-0008",
+    "consumer_name": "Siddiqui",
+    "email": "priya@example.com",
+    "address": "89, Park Street, Kolkata",
+    "service_period_start": "2025-05-01",
+    "service_period_end": "2025-05-31",
+    "due_date": "2025-06-15",
+    "base_amount": 600,
+    "penalty_amount": 0,
+    "total_amount": 600,
+    "status": "PAID",
+    "bank_ref": "BNKREF24680",
+    "payment_ref": "5114921030234",
+    "paid_at": "2025-09-28T21:51:38.141Z"
   }
 }

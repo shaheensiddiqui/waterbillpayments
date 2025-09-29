@@ -1,6 +1,7 @@
 const { getBillFromMockBank } = require("../services/mockBankService");
 const Bill = require("../models/Bill");
 const PaymentLink = require("../models/PaymentLink");
+const Transaction = require("../models/Transaction");
 
 // U1: Fetch bill
 async function fetchBill(req, res) {
@@ -48,6 +49,11 @@ async function listBills(req, res) {
           limit: 1,
           order: [["createdAt", "DESC"]],
         },
+        {
+          model: Transaction,
+          limit: 1,
+          order: [["createdAt", "DESC"]],
+        },
       ],
       order: [["createdAt", "DESC"]],
     });
@@ -58,4 +64,35 @@ async function listBills(req, res) {
   }
 }
 
-module.exports = { fetchBill, listBills };
+// GET /api/bills/:billNumber
+async function getBill(req, res) {
+  try {
+    const { billNumber } = req.params;
+
+    const bill = await Bill.findOne({
+      where: { bill_number: billNumber },
+      include: [
+        {
+          model: PaymentLink,
+          limit: 1,
+          order: [["createdAt", "DESC"]],
+        },
+        {
+          model: Transaction,
+          limit: 1,
+          order: [["createdAt", "DESC"]],
+        },
+      ],
+    });
+
+    if (!bill) {
+      return res.status(404).json({ error: "Bill not found" });
+    }
+
+    res.json(bill);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
+module.exports = { fetchBill, listBills, getBill };

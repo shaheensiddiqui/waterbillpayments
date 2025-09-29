@@ -6,7 +6,15 @@ const Bill = require("./models/Bill");
 const billsRouter = require("./routes/bills");
 
 const app = express();
-app.use(express.json());
+
+// ✅ JSON parser with raw body capture (important for webhooks)
+app.use(
+  express.json({
+    verify: (req, res, buf) => {
+      req.rawBody = buf.toString(); // store raw body for webhook signature verification
+    },
+  })
+);
 
 const cors = require("cors");
 app.use(cors());
@@ -34,6 +42,12 @@ app.use("/api/email", emailRoutes);
 // dashboard route
 const dashboardRoutes = require("./routes/dashboard");
 app.use("/api/dashboard", dashboardRoutes);
+
+// transactions route
+const transactionRoutes = require("./routes/transactions");
+app.use("/api/transactions", transactionRoutes);
+
+console.log("🔑 Cashfree Secret loaded:", process.env.CASHFREE_CLIENT_SECRET ? "YES" : "NO");
 
 // start server + DB sync
 const PORT = process.env.PORT || 4000;

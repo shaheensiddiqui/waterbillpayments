@@ -1,12 +1,10 @@
 const express = require("express");
-const { fetchBill, listBills } = require("../controllers/billsController");
+const { fetchBill, listBills, getBill } = require("../controllers/billsController");
 
 const router = express.Router();
 
-// POST /api/bills/fetch
 router.post("/fetch", fetchBill);
-
-// GET /api/bills (with ?status=PAID&search=WB-1234)
 router.get("/", listBills);
+router.get("/:billNumber", getBill);
 
 module.exports = router;
