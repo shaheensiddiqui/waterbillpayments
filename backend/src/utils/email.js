@@ -1,3 +1,5 @@
+//email.js
+
 const nodemailer = require("nodemailer");
 
 const transporter = nodemailer.createTransport({
@@ -9,6 +11,13 @@ const transporter = nodemailer.createTransport({
 });
 
 async function sendPaylinkEmail({ to, subject, html, text }) {
+  // 🔹 Simulate a bounce if email contains "bounce"
+  if (to.includes("bounce")) {
+    const err = new Error("Simulated email bounce");
+    err.code = "EMAIL_BOUNCE";
+    throw err;
+  }
+
   return transporter.sendMail({
     from: "no-reply@waterbills.com",
     to,
@@ -17,5 +26,6 @@ async function sendPaylinkEmail({ to, subject, html, text }) {
     text,
   });
 }
+
 
 module.exports = { sendPaylinkEmail };

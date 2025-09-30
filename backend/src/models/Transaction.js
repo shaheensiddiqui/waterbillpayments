@@ -1,28 +1,33 @@
+// models/Transaction.js
 const { DataTypes } = require("sequelize");
 const sequelize = require("../config/db");
 const Bill = require("./Bill");
 
-const Transaction = sequelize.define("Transaction", {
-  id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
-  bill_id: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    references: { model: "Bills", key: "id" },
-    onDelete: "CASCADE",
+const Transaction = sequelize.define(
+  "Transaction",
+  {
+    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+    bill_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: { model: "Bills", key: "id" },
+      onDelete: "CASCADE",
+    },
+    cf_order_id: { type: DataTypes.STRING },
+    payment_session_id: { type: DataTypes.STRING },
+    cf_payment_id: { type: DataTypes.STRING },
+    amount: { type: DataTypes.DECIMAL(10, 2), allowNull: false },
+    currency: { type: DataTypes.STRING, defaultValue: "INR" },
+    mode: { type: DataTypes.STRING }, // UPI/CARD/etc
+    bank_ref: { type: DataTypes.STRING }, // <— added
+    status: {
+      type: DataTypes.ENUM("SUCCESS", "FAILED", "PENDING"),
+      allowNull: false,
+    },
+    paid_at: { type: DataTypes.DATE }, // <— added
   },
-  cf_order_id: { type: DataTypes.STRING },
-  payment_session_id: { type: DataTypes.STRING },
-  cf_payment_id: { type: DataTypes.STRING },
-  amount: { type: DataTypes.DECIMAL(10, 2), allowNull: false },
-  currency: { type: DataTypes.STRING, defaultValue: "INR" },
-  mode: { type: DataTypes.STRING }, // UPI, CARD, NETBANKING, etc.
-  status: {
-    type: DataTypes.ENUM("SUCCESS", "FAILED", "PENDING"),
-    allowNull: false,
-  },
-}, {
-  timestamps: true,
-});
+  { timestamps: true }
+);
 
 // associations
 Bill.hasMany(Transaction, { foreignKey: "bill_id" });

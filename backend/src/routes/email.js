@@ -1,3 +1,5 @@
+//email.js
+
 const express = require("express");
 const { Bill, PaymentLink, EmailLog } = require("../models");
 const { sendPaylinkEmail } = require("../utils/email");

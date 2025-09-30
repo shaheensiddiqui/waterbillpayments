@@ -1,18 +1,19 @@
+// models/PaymentLink.js
 const { DataTypes } = require("sequelize");
 const sequelize = require("../config/db");
 
 const PaymentLink = sequelize.define("PaymentLink", {
-  bill_id: { type: DataTypes.INTEGER, allowNull: false },
-  cf_link_id: { type: DataTypes.STRING }, // not INTEGER
-  link_id: { type: DataTypes.STRING, unique: true },
-  link_url: DataTypes.TEXT,
+  cf_link_id: DataTypes.STRING,   // Cashfree’s link ID
+  link_id: DataTypes.STRING,      // Our deterministic key for reconciliation
+  link_url: DataTypes.STRING,
   amount: DataTypes.DECIMAL(10, 2),
-  currency: { type: DataTypes.STRING(3), defaultValue: "INR" },
+  currency: DataTypes.STRING,
+  status: DataTypes.STRING,
   expires_at: DataTypes.DATE,
-  status: {
-    type: DataTypes.ENUM("ACTIVE", "PAID", "CANCELLED", "EXPIRED"),
-    defaultValue: "ACTIVE"
-  }
+  bill_id: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+  },
 });
 
 module.exports = PaymentLink;

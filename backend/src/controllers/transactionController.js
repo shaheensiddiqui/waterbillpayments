@@ -1,3 +1,4 @@
+// controllers/transactionController.js
 const Transaction = require("../models/Transaction");
 const Bill = require("../models/Bill");
 
@@ -18,7 +19,10 @@ async function listTransactions(req, res) {
 async function getTransactionsByBill(req, res) {
   try {
     const { bill_id } = req.params;
-    const transactions = await Transaction.findAll({ where: { bill_id } });
+    const transactions = await Transaction.findAll({
+      where: { bill_id },
+      order: [["createdAt", "DESC"]],
+    });
     res.json(transactions);
   } catch (err) {
     res.status(500).json({ error: err.message });

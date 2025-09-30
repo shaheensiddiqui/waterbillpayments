@@ -1,10 +1,14 @@
+// controllers/dashboardController.js
 const Bill = require("../models/Bill");
+const { Op } = require("sequelize");
 
 async function dashboardSummary(req, res) {
   try {
     const totalBills = await Bill.count();
     const paidBills = await Bill.count({ where: { status: "PAID" } });
-    const unpaidBills = await Bill.count({ where: { status: "CREATED" } });
+    const unpaidBills = await Bill.count({
+      where: { status: { [Op.in]: ["CREATED", "LINK_SENT", "PAYMENT_PENDING"] } },
+    });
 
     const totalRevenue = await Bill.sum("total_amount", { where: { status: "PAID" } });
 
@@ -12,7 +16,7 @@ async function dashboardSummary(req, res) {
       totalBills,
       paidBills,
       unpaidBills,
-      totalRevenue: totalRevenue || 0
+      totalRevenue: totalRevenue || 0,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });

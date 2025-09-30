@@ -1,140 +1,219 @@
+// controllers/webhookController.js
+
 const crypto = require("crypto");
-const axios = require("axios");
+const { Op } = require("sequelize");
 const Bill = require("../models/Bill");
 const PaymentLink = require("../models/PaymentLink");
 const Transaction = require("../models/Transaction");
 const WebhookEvent = require("../models/WebhookEvent");
+const { markBillPaid } = require("../services/mockBankService");
 
-/**
- * Verify Cashfree webhook signature
- */
-function verifyCashfreeSignature(req) {
-  const signature = req.headers["x-webhook-signature"];
-  const timestamp = req.headers["x-webhook-timestamp"];
-  const rawBody = req.rawBody; // set in express.json verify
+// 🔹 Verify Cashfree signature
+function verifySignature(req) {
+  const secret = process.env.CASHFREE_CLIENT_SECRET;
+  const sig = req.headers["x-webhook-signature"];
+  const ts = req.headers["x-webhook-timestamp"];
 
-  if (!signature || !timestamp || !rawBody) {
+  if (!secret || !sig || !ts) {
+    console.warn("⚠️ Missing signature headers");
     return false;
   }
 
-  const computed = crypto
-    .createHmac("sha256", process.env.CASHFREE_CLIENT_SECRET)  // ✅ use webhook secret
-    .update(timestamp + rawBody)
-    .digest("base64");
+  const data = ts + (req.rawBody || JSON.stringify(req.body));
+  const expected = crypto.createHmac("sha256", secret).update(data).digest("base64");
 
-  return computed === signature;
+  try {
+    const a = Buffer.from(sig);
+    const b = Buffer.from(expected);
+    return a.length === b.length && crypto.timingSafeEqual(a, b);
+  } catch {
+    return false;
+  }
 }
 
+// 🔹 Main webhook handler
 async function cashfreeWebhook(req, res) {
+  let webhookRow = null;
+
   try {
     const event = req.body;
+    console.log("➡️ Webhook Received:", event.type);
+    console.log("📦 Payload:", JSON.stringify(event, null, 2));
 
-    // 🔒 Step 1: Verify signature
-    const verified = verifyCashfreeSignature(req);
-
-    // Step 2: Always log webhook
-    const webhookLog = await WebhookEvent.create({
+    // 0️⃣ Save raw webhook event
+    const valid = verifySignature(req);
+    webhookRow = await WebhookEvent.create({
       type: event.type,
-      raw_payload: req.rawBody,
+      raw_payload: JSON.stringify(event),
       headers: JSON.stringify(req.headers),
-      verified,
-      status: verified ? "RECEIVED" : "FAILED",
+      verified: !!valid,
+      status: "RECEIVED",
       received_at: new Date(),
     });
 
-    if (!verified) {
-      console.error("❌ Invalid Cashfree webhook signature");
-      return res.status(401).json({ error: "Invalid signature" });
+    if (!valid) {
+      console.warn("❌ Invalid webhook signature");
+      return res.status(400).json({ error: "invalid signature" });
     }
 
-    // ✅ Step 3: Handle payment success
-    if (event.type === "PAYMENT_SUCCESS_WEBHOOK" || event.type === "payment.success") {
-      let bill = null;
-      let paymentLink = null;
+    // 🔑 Extract identifiers
+    const tags = event.data?.order?.order_tags || {};
+    const cfLinkId = tags.cf_link_id || null;
+    const ourLinkId = tags.link_id || null;
+    console.log("🔑 Identifiers:", { cfLinkId, ourLinkId });
 
-      const cfLinkId = event.data?.order?.order_tags?.cf_link_id
-        ? String(event.data.order.order_tags.cf_link_id)
-        : null;
-      const linkId = event.data?.order?.order_tags?.link_id
-        ? String(event.data.order.order_tags.link_id)
-        : null;
-
-      console.log("🔎 Webhook identifiers:", { cfLinkId, linkId });
-
-      if (cfLinkId) {
-        paymentLink = await PaymentLink.findOne({ where: { cf_link_id: cfLinkId } });
-      } else if (linkId) {
-        paymentLink = await PaymentLink.findOne({ where: { link_id: linkId } });
-      }
-
-      if (!paymentLink) {
-        console.error("❌ PaymentLink not found for", { cfLinkId, linkId });
-        return res.status(404).json({ error: "PaymentLink not found" });
-      }
-
-      bill = await Bill.findByPk(paymentLink.bill_id);
-      if (!bill) {
-        console.error("❌ Bill not found for PaymentLink", paymentLink.id);
-        return res.status(404).json({ error: "Bill not found" });
-      }
-
-      // Step 4: Prevent duplicate transaction
-      const existingTx = await Transaction.findOne({
-        where: { cf_payment_id: event.data?.payment?.cf_payment_id || "" },
+    let payLink = null;
+    if (cfLinkId || ourLinkId) {
+      payLink = await PaymentLink.findOne({
+        where: { [Op.or]: [{ cf_link_id: cfLinkId }, { link_id: ourLinkId }] },
       });
-      if (existingTx) {
-        console.log("⚠️ Duplicate webhook received, skipping transaction insert");
-        return res.json({ message: "Duplicate webhook ignored" });
-      }
-
-      // Step 5: Update bill + payment link
-      bill.status = "PAID";
-      await bill.save();
-
-      paymentLink.status = "PAID";
-      await paymentLink.save();
-
-      // Step 6: Log transaction
-      await Transaction.create({
-        bill_id: bill.id,
-        cf_order_id: event.data?.order?.order_id || null,
-        cf_payment_id: event.data?.payment?.cf_payment_id || null,
-        payment_session_id: event.data?.payment?.payment_session_id || null,
-        amount: event.data?.payment?.payment_amount || bill.total_amount,
-        currency: event.data?.payment?.payment_currency || "INR",
-        mode: event.data?.payment?.payment_group || "UNKNOWN",
-        status: "SUCCESS",
-      });
-
-      // Step 7: Call Mock Bank API → mark bill as paid
-      try {
-        await axios.post(
-  `${process.env.MOCK_BANK_BASE_URL}/mock-bank/bills/${bill.bill_number}/mark-paid`,
-  {
-    payment_ref: event.data?.payment?.cf_payment_id,
-    paid_amount: event.data?.payment?.payment_amount,
-    paid_at: new Date().toISOString(),
-  }
-);
-
-        console.log("🏦 Mock Bank updated: bill marked as paid");
-      } catch (mockErr) {
-        console.error("⚠️ Failed to update Mock Bank:", mockErr.message);
-      }
-
-      // Step 8: Mark webhook as processed
-      webhookLog.status = "PROCESSED";
-      webhookLog.processed_at = new Date();
-      await webhookLog.save();
-
-      console.log(`✅ Bill ${bill.bill_number} marked as PAID & transaction logged`);
-      return res.json({ message: `Bill ${bill.bill_number} marked as PAID` });
+    }
+    if (!payLink) {
+      console.warn("⚠️ No PaymentLink found for webhook", { cfLinkId, ourLinkId });
     }
 
-    // Step 9: Ignore other events
-    return res.json({ message: "Webhook received but no action taken" });
+    // 1️⃣ PAYMENT PENDING
+    if (event.type === "PAYMENT_PENDING_WEBHOOK" || event.type === "payment.pending") {
+      console.log("⏳ Handling PAYMENT_PENDING...");
+      if (payLink) {
+        const bill = await Bill.findByPk(payLink.bill_id);
+        if (bill && bill.status !== "PAID") {
+          bill.status = "PAYMENT_PENDING";
+          await bill.save();
+          console.log(`⏳ Bill ${bill.bill_number} → PAYMENT_PENDING`);
+        }
+        if (payLink.status !== "PAID") {
+          payLink.status = "PAYMENT_PENDING";
+          await payLink.save();
+          console.log(`🔗 PaymentLink ${payLink.id} → PAYMENT_PENDING`);
+        }
+      }
+    }
+
+    // 2️⃣ PAYMENT SUCCESS
+    else if (event.type === "PAYMENT_SUCCESS_WEBHOOK" || event.type === "payment.success") {
+      console.log("✅ Handling PAYMENT_SUCCESS...");
+
+      const cfPaymentId = event.data?.payment?.cf_payment_id || null;
+      const amount = event.data?.payment?.payment_amount ?? null;
+      const currency = event.data?.payment?.payment_currency || "INR";
+      const bankRef = event.data?.payment?.bank_reference || null;
+      const mode =
+        event.data?.payment?.payment_method?.upi?.channel ||
+        event.data?.payment?.payment_method?.card?.card_network ||
+        event.data?.payment?.payment_group ||
+        null;
+      const paidAt = event.data?.payment?.payment_time
+        ? new Date(event.data.payment.payment_time)
+        : new Date();
+
+      if (payLink) {
+        const bill = await Bill.findByPk(payLink.bill_id);
+        if (bill) {
+          bill.status = "PAID";
+          bill.bank_ref = bankRef || bill.bank_ref;
+          await bill.save();
+          console.log(`💰 Bill ${bill.bill_number} → PAID`);
+
+          try {
+            await markBillPaid(
+              bill.bill_number,
+              cfPaymentId || bankRef || `CF_${Date.now()}`,
+              Number(amount ?? bill.total_amount),
+              paidAt.toISOString()
+            );
+            console.log("🏦 MockBank updated");
+          } catch (mockErr) {
+            console.error("🏦 MockBank update failed:", mockErr.message);
+          }
+        }
+
+        payLink.status = "PAID";
+        await payLink.save();
+
+        await Transaction.create({
+          bill_id: payLink.bill_id,
+          cf_payment_id: cfPaymentId,
+          amount: amount != null ? Number(amount) : null,
+          currency,
+          mode,
+          status: "SUCCESS",
+          bank_ref: bankRef,
+          paid_at: paidAt,
+        });
+      }
+    }
+
+    // 3️⃣ PAYMENT FAILED
+    else if (event.type === "PAYMENT_FAILED_WEBHOOK" || event.type === "payment.failed") {
+      console.log("❌ Handling PAYMENT_FAILED...");
+
+      if (payLink) {
+        const bill = await Bill.findByPk(payLink.bill_id);
+        if (bill && bill.status !== "PAID") {
+          bill.status = "CANCELLED";
+          await bill.save();
+          console.log(`❌ Bill ${bill.bill_number} → CANCELLED`);
+        }
+
+        if (payLink.status !== "PAID") {
+          payLink.status = "CANCELLED";
+          await payLink.save();
+          console.log(`🔗 PaymentLink ${payLink.id} → CANCELLED`);
+        }
+
+        await Transaction.create({
+          bill_id: payLink.bill_id,
+          cf_payment_id: event.data?.payment?.cf_payment_id,
+          amount: Number(event.data?.payment?.payment_amount ?? 0),
+          currency: event.data?.payment?.payment_currency || "INR",
+          mode: event.data?.payment?.payment_group || null,
+          status: "FAILED",
+          bank_ref: event.data?.payment?.bank_reference || null,
+          paid_at: event.data?.payment?.payment_time
+            ? new Date(event.data.payment.payment_time)
+            : new Date(),
+        });
+
+        console.log(`📒 Transaction recorded as FAILED for link_id=${ourLinkId}`);
+      }
+    }
+
+    // 4️⃣ USER DROPPED
+    else if (
+      event.type === "PAYMENT_USER_DROPPED_WEBHOOK" ||
+      event.type === "payment.user_dropped"
+    ) {
+      console.log("👤 Handling USER DROPPED...");
+      if (payLink && payLink.status !== "PAID") {
+        payLink.status = "CANCELLED";
+        await payLink.save();
+        console.log(`🔗 PaymentLink ${payLink.id} → CANCELLED (user dropped)`);
+      }
+    }
+
+    // 5️⃣ Fallback
+    else {
+      console.warn("⚠️ Unhandled webhook type:", event.type);
+    }
+
+    // 🔹 Mark webhook processed
+    if (webhookRow) {
+      webhookRow.status = "PROCESSED";
+      webhookRow.processed_at = new Date();
+      await webhookRow.save();
+    }
+
+    return res.json({ received: true });
   } catch (err) {
-    console.error("Webhook error:", err);
+    console.error("❌ Webhook error:", err);
+
+    if (webhookRow) {
+      webhookRow.status = "FAILED";
+      webhookRow.processed_at = new Date();
+      await webhookRow.save();
+    }
+
     return res.status(500).json({ error: err.message });
   }
 }

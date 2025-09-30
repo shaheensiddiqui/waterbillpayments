@@ -1,8 +1,10 @@
+//Bill.js
+
 const { DataTypes } = require("sequelize");
 const sequelize = require("../config/db");
 
 const Bill = sequelize.define("Bill", {
-  bill_number: { type: DataTypes.STRING, unique: true, allowNull: false },
+  bill_number: { type: DataTypes.STRING, allowNull: false, unique: true },
   consumer_name: DataTypes.STRING,
   email: DataTypes.STRING,
   address: DataTypes.TEXT,
@@ -12,18 +14,15 @@ const Bill = sequelize.define("Bill", {
   base_amount: DataTypes.DECIMAL(10, 2),
   penalty_amount: DataTypes.DECIMAL(10, 2),
   total_amount: DataTypes.DECIMAL(10, 2),
-  status: {
-    type: DataTypes.ENUM(
-      "CREATED",
-      "LINK_SENT",
-      "PAYMENT_PENDING",
-      "PAID",
-      "CANCELLED",
-      "EXPIRED"
-    ),
-    defaultValue: "CREATED"
-  },
-  bank_ref: DataTypes.STRING
+  status: DataTypes.ENUM(
+    "CREATED",
+    "LINK_SENT",
+    "PAYMENT_PENDING",
+    "PAID",
+    "CANCELLED",
+    "EXPIRED"
+  ),
+  bank_ref: DataTypes.STRING,
 });
 
-module.exports = Bill;
+module.exports = Bill; // ✅ not { Bill }

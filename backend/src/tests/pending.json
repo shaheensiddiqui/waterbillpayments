@@ -1,0 +1,28 @@
+{
+  "type": "payment.pending",
+  "data": {
+    "order": {
+      "order_id": "CFPay_TEST123",
+      "order_amount": 500,
+      "order_currency": "INR",
+      "order_tags": {
+        "cf_link_id": "6642146",
+        "link_id": "WB-2025-1008-20250929"
+      }
+    },
+    "payment": {
+      "cf_payment_id": "5114921029999",
+      "payment_status": "PENDING",
+      "payment_amount": 500,
+      "payment_currency": "INR",
+      "payment_message": "Awaiting confirmation",
+      "payment_time": "2025-09-29T20:10:34+05:30",
+      "bank_reference": "TESTBANKREF123",
+      "payment_method": {
+        "upi": {
+          "channel": "collect"
+        }
+      }
+    }
+  }
+}
