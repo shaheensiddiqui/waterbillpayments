@@ -25,4 +25,4 @@ const Bill = sequelize.define("Bill", {
   bank_ref: DataTypes.STRING,
 });
 
-module.exports = Bill; // ✅ not { Bill }
+module.exports = Bill; 

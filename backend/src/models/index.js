@@ -12,6 +12,4 @@ PaymentLink.belongsTo(Bill, { foreignKey: "bill_id", onDelete: "CASCADE" });
 Bill.hasMany(EmailLog, { foreignKey: "bill_id", onDelete: "CASCADE" });
 EmailLog.belongsTo(Bill, { foreignKey: "bill_id", onDelete: "CASCADE" });
 
-// Transaction associations are defined inside Transaction model (and linked here via import)
-
 module.exports = { Bill, PaymentLink, EmailLog, Transaction, WebhookEvent };

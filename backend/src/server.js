@@ -60,6 +60,8 @@ console.log(
   process.env.CASHFREE_CLIENT_SECRET ? "YES" : "NO"
 );
 
+module.exports = app;
+
 // Start server + DB sync
 const PORT = process.env.PORT || 4000;
 sequelize.sync({ alter: true }).then(() => {

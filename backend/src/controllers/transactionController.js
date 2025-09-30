@@ -1,13 +1,19 @@
 // controllers/transactionController.js
+
 const Transaction = require("../models/Transaction");
 const Bill = require("../models/Bill");
 
-// List all transactions
+// Fetch all transactions with related bill info
 async function listTransactions(req, res) {
   try {
     const transactions = await Transaction.findAll({
-      include: [{ model: Bill, attributes: ["bill_number", "consumer_name"] }],
-      order: [["createdAt", "DESC"]],
+      include: [
+        {
+          model: Bill,
+          attributes: ["bill_number", "consumer_name"], // show limited bill fields
+        },
+      ],
+      order: [["createdAt", "DESC"]], // latest transactions first
     });
     res.json(transactions);
   } catch (err) {
@@ -15,13 +21,13 @@ async function listTransactions(req, res) {
   }
 }
 
-// Get transactions by bill_id
+// Fetch transactions for a specific bill
 async function getTransactionsByBill(req, res) {
   try {
     const { bill_id } = req.params;
     const transactions = await Transaction.findAll({
       where: { bill_id },
-      order: [["createdAt", "DESC"]],
+      order: [["createdAt", "DESC"]], // latest transactions first
     });
     res.json(transactions);
   } catch (err) {

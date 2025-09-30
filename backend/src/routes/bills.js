@@ -9,4 +9,3 @@ router.get("/:billNumber", getBill);
 
 module.exports = router;
 
-//bills.js

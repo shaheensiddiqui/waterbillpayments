@@ -35,7 +35,6 @@ async function createPaymentLink(bill, idempotencyKey) {
     const { data } = await axios.post(`${BASE_URL}/links`, body, { headers });
     return data;
   } catch (err) {
-    // 👇 If idempotency error → retry with suffix
     if (err.response?.data?.type === "idempotency_error") {
       console.warn(`⚠️ Idempotency error for ${idempotencyKey}, retrying...`);
 

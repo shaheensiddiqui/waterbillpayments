@@ -8,14 +8,14 @@ const Transaction = require("../models/Transaction");
 const WebhookEvent = require("../models/WebhookEvent");
 const { markBillPaid } = require("../services/mockBankService");
 
-// 🔹 Verify Cashfree signature
+// Verify webhook signature from Cashfree
 function verifySignature(req) {
   const secret = process.env.CASHFREE_CLIENT_SECRET;
   const sig = req.headers["x-webhook-signature"];
   const ts = req.headers["x-webhook-timestamp"];
 
   if (!secret || !sig || !ts) {
-    console.warn("⚠️ Missing signature headers");
+    console.warn("Missing signature headers");
     return false;
   }
 
@@ -31,16 +31,16 @@ function verifySignature(req) {
   }
 }
 
-// 🔹 Main webhook handler
+// Main webhook handler
 async function cashfreeWebhook(req, res) {
   let webhookRow = null;
 
   try {
     const event = req.body;
-    console.log("➡️ Webhook Received:", event.type);
-    console.log("📦 Payload:", JSON.stringify(event, null, 2));
+    console.log("Webhook Received:", event.type);
+    console.log("Payload:", JSON.stringify(event, null, 2));
 
-    // 0️⃣ Save raw webhook event
+    // Log raw webhook event in DB
     const valid = verifySignature(req);
     webhookRow = await WebhookEvent.create({
       type: event.type,
@@ -52,15 +52,15 @@ async function cashfreeWebhook(req, res) {
     });
 
     if (!valid) {
-      console.warn("❌ Invalid webhook signature");
+      console.warn("Invalid webhook signature");
       return res.status(400).json({ error: "invalid signature" });
     }
 
-    // 🔑 Extract identifiers
+    // Extract identifiers from tags
     const tags = event.data?.order?.order_tags || {};
     const cfLinkId = tags.cf_link_id || null;
     const ourLinkId = tags.link_id || null;
-    console.log("🔑 Identifiers:", { cfLinkId, ourLinkId });
+    console.log("Identifiers:", { cfLinkId, ourLinkId });
 
     let payLink = null;
     if (cfLinkId || ourLinkId) {
@@ -69,30 +69,30 @@ async function cashfreeWebhook(req, res) {
       });
     }
     if (!payLink) {
-      console.warn("⚠️ No PaymentLink found for webhook", { cfLinkId, ourLinkId });
+      console.warn("No PaymentLink found for webhook", { cfLinkId, ourLinkId });
     }
 
-    // 1️⃣ PAYMENT PENDING
+    // Handle PAYMENT PENDING
     if (event.type === "PAYMENT_PENDING_WEBHOOK" || event.type === "payment.pending") {
-      console.log("⏳ Handling PAYMENT_PENDING...");
+      console.log("Handling PAYMENT_PENDING...");
       if (payLink) {
         const bill = await Bill.findByPk(payLink.bill_id);
         if (bill && bill.status !== "PAID") {
           bill.status = "PAYMENT_PENDING";
           await bill.save();
-          console.log(`⏳ Bill ${bill.bill_number} → PAYMENT_PENDING`);
+          console.log(`Bill ${bill.bill_number} → PAYMENT_PENDING`);
         }
         if (payLink.status !== "PAID") {
           payLink.status = "PAYMENT_PENDING";
           await payLink.save();
-          console.log(`🔗 PaymentLink ${payLink.id} → PAYMENT_PENDING`);
+          console.log(`PaymentLink ${payLink.id} → PAYMENT_PENDING`);
         }
       }
     }
 
-    // 2️⃣ PAYMENT SUCCESS
+    // Handle PAYMENT SUCCESS
     else if (event.type === "PAYMENT_SUCCESS_WEBHOOK" || event.type === "payment.success") {
-      console.log("✅ Handling PAYMENT_SUCCESS...");
+      console.log("Handling PAYMENT_SUCCESS...");
 
       const cfPaymentId = event.data?.payment?.cf_payment_id || null;
       const amount = event.data?.payment?.payment_amount ?? null;
@@ -113,7 +113,7 @@ async function cashfreeWebhook(req, res) {
           bill.status = "PAID";
           bill.bank_ref = bankRef || bill.bank_ref;
           await bill.save();
-          console.log(`💰 Bill ${bill.bill_number} → PAID`);
+          console.log(`Bill ${bill.bill_number} → PAID`);
 
           try {
             await markBillPaid(
@@ -122,9 +122,9 @@ async function cashfreeWebhook(req, res) {
               Number(amount ?? bill.total_amount),
               paidAt.toISOString()
             );
-            console.log("🏦 MockBank updated");
+            console.log("MockBank updated");
           } catch (mockErr) {
-            console.error("🏦 MockBank update failed:", mockErr.message);
+            console.error("MockBank update failed:", mockErr.message);
           }
         }
 
@@ -144,22 +144,22 @@ async function cashfreeWebhook(req, res) {
       }
     }
 
-    // 3️⃣ PAYMENT FAILED
+    // Handle PAYMENT FAILED
     else if (event.type === "PAYMENT_FAILED_WEBHOOK" || event.type === "payment.failed") {
-      console.log("❌ Handling PAYMENT_FAILED...");
+      console.log("Handling PAYMENT_FAILED...");
 
       if (payLink) {
         const bill = await Bill.findByPk(payLink.bill_id);
         if (bill && bill.status !== "PAID") {
           bill.status = "CANCELLED";
           await bill.save();
-          console.log(`❌ Bill ${bill.bill_number} → CANCELLED`);
+          console.log(`Bill ${bill.bill_number} → CANCELLED`);
         }
 
         if (payLink.status !== "PAID") {
           payLink.status = "CANCELLED";
           await payLink.save();
-          console.log(`🔗 PaymentLink ${payLink.id} → CANCELLED`);
+          console.log(`PaymentLink ${payLink.id} → CANCELLED`);
         }
 
         await Transaction.create({
@@ -175,29 +175,29 @@ async function cashfreeWebhook(req, res) {
             : new Date(),
         });
 
-        console.log(`📒 Transaction recorded as FAILED for link_id=${ourLinkId}`);
+        console.log(`Transaction recorded as FAILED for link_id=${ourLinkId}`);
       }
     }
 
-    // 4️⃣ USER DROPPED
+    // Handle USER DROPPED
     else if (
       event.type === "PAYMENT_USER_DROPPED_WEBHOOK" ||
       event.type === "payment.user_dropped"
     ) {
-      console.log("👤 Handling USER DROPPED...");
+      console.log("Handling USER DROPPED...");
       if (payLink && payLink.status !== "PAID") {
         payLink.status = "CANCELLED";
         await payLink.save();
-        console.log(`🔗 PaymentLink ${payLink.id} → CANCELLED (user dropped)`);
+        console.log(`PaymentLink ${payLink.id} → CANCELLED (user dropped)`);
       }
     }
 
-    // 5️⃣ Fallback
+    // Unknown / unhandled event type
     else {
-      console.warn("⚠️ Unhandled webhook type:", event.type);
+      console.warn("Unhandled webhook type:", event.type);
     }
 
-    // 🔹 Mark webhook processed
+    // Mark webhook as processed
     if (webhookRow) {
       webhookRow.status = "PROCESSED";
       webhookRow.processed_at = new Date();
@@ -206,7 +206,7 @@ async function cashfreeWebhook(req, res) {
 
     return res.json({ received: true });
   } catch (err) {
-    console.error("❌ Webhook error:", err);
+    console.error("Webhook error:", err);
 
     if (webhookRow) {
       webhookRow.status = "FAILED";
@@ -218,4 +218,4 @@ async function cashfreeWebhook(req, res) {
   }
 }
 
-module.exports = { cashfreeWebhook };
+module.exports = { cashfreeWebhook, verifySignature };

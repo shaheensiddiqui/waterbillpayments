@@ -9,11 +9,11 @@ const WebhookEvent = sequelize.define("WebhookEvent", {
     allowNull: false,
   },
   raw_payload: {
-    type: DataTypes.TEXT("long"), // full JSON payload
+    type: DataTypes.TEXT("long"), 
     allowNull: false,
   },
   headers: {
-    type: DataTypes.TEXT("long"), // save request headers
+    type: DataTypes.TEXT("long"), 
     allowNull: true,
   },
   verified: {

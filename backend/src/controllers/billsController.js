@@ -1,11 +1,11 @@
 // controllers/billsController.js
+
 const { getBillFromMockBank } = require("../services/mockBankService");
 const Bill = require("../models/Bill");
 const PaymentLink = require("../models/PaymentLink");
 const Transaction = require("../models/Transaction");
 
-// U1: Fetch bill (avoid dialect-specific upsert return shape)
-// U1: Fetch bill
+// U1: Fetch bill from mock bank and persist/update in DB
 async function fetchBill(req, res) {
   try {
     const { bill_number } = req.body;
@@ -13,9 +13,13 @@ async function fetchBill(req, res) {
       return res.status(400).json({ error: "bill_number is required" });
     }
 
+    // Pull data from mock bank service
     const { data, expired } = await getBillFromMockBank(bill_number);
 
+    // Check if bill already exists
     let bill = await Bill.findOne({ where: { bill_number } });
+
+    // Prepare payload for insert/update
     const payload = {
       bill_number: data.bill_number,
       consumer_name: data.consumer_name,
@@ -31,6 +35,7 @@ async function fetchBill(req, res) {
       bank_ref: data.bank_ref,
     };
 
+    // Update existing bill or create new one
     if (bill) {
       await bill.update(payload);
     } else {
@@ -39,6 +44,7 @@ async function fetchBill(req, res) {
 
     res.json({ bill, expired });
   } catch (err) {
+    // Handle 404 from mock bank
     if (err.response?.status === 404) {
       return res.status(404).json({ error: "Bill not found" });
     }
@@ -46,12 +52,13 @@ async function fetchBill(req, res) {
   }
 }
 
-
-// U6: List bills (use separate:true so include limit/order works)
+// U6: List bills with latest payment link + transaction info
 async function listBills(req, res) {
   try {
     const { status, search } = req.query;
     const where = {};
+
+    // Filter by status or exact bill_number if provided
     if (status) where.status = status;
     if (search) where.bill_number = search;
 
@@ -60,7 +67,7 @@ async function listBills(req, res) {
       include: [
         {
           model: PaymentLink,
-          separate: true,
+          separate: true, // fetch separately so limit/order applies
           limit: 1,
           order: [["createdAt", "DESC"]],
         },
@@ -80,7 +87,7 @@ async function listBills(req, res) {
   }
 }
 
-// GET /api/bills/:billNumber (same include fix)
+// GET /api/bills/:billNumber → fetch single bill with latest info
 async function getBill(req, res) {
   try {
     const { billNumber } = req.params;

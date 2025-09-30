@@ -3,8 +3,8 @@ const { DataTypes } = require("sequelize");
 const sequelize = require("../config/db");
 
 const PaymentLink = sequelize.define("PaymentLink", {
-  cf_link_id: DataTypes.STRING,   // Cashfree’s link ID
-  link_id: DataTypes.STRING,      // Our deterministic key for reconciliation
+  cf_link_id: DataTypes.STRING,   
+  link_id: DataTypes.STRING,      
   link_url: DataTypes.STRING,
   amount: DataTypes.DECIMAL(10, 2),
   currency: DataTypes.STRING,

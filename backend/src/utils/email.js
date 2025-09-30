@@ -11,7 +11,7 @@ const transporter = nodemailer.createTransport({
 });
 
 async function sendPaylinkEmail({ to, subject, html, text }) {
-  // 🔹 Simulate a bounce if email contains "bounce"
+  // Simulate a bounce if email contains "bounce"
   if (to.includes("bounce")) {
     const err = new Error("Simulated email bounce");
     err.code = "EMAIL_BOUNCE";
