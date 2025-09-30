@@ -1,139 +1,143 @@
-Water Bill Payments System
+Water Bill Payments
 
-This project is a full-stack application for managing and paying water bills. It includes:
+Overview
+A full-stack application for managing and paying water bills. The backend is built with Node.js, Express, and Sequelize (MySQL), while the frontend is built with React. The system supports bill creation, payment links, webhook handling, email notifications, and a dashboard with analytics.
 
-Backend (waterbillpayments/backend)
-REST API built with Node.js, Express, Sequelize, and MySQL.
+Setup
 
-Frontend (waterbillpayments/frontend)
-React-based dashboard for operators to manage bills and payments.
+Clone the repository and install dependencies:
 
-Mock Bank Service (mock-bank)
-Lightweight Express server simulating bank responses.
+git clone https://github.com/your-username/waterbillpayments.git
+cd waterbillpayments
 
-Postman Collection (postman)
-Contains example API requests for testing.
-
-Features
-
-Bill Management: Create, fetch, search, and filter bills.
-
-Payment Links: Generate and resend payment links via email.
-
-Webhook Handling: Cashfree webhook simulation with bill updates.
-
-Dashboard: Operator dashboard to search bills, view statuses, resend links, and see analytics.
-
-Mock Bank: Simulates bill payment status changes for integration testing.
-
-Project Structure
-FINAL_ASSESMENT/
-│── waterbillpayments/
-│   ├── backend/           # Express + Sequelize backend
-│   │   ├── src/           # API source code
-│   │   ├── .env           # Backend environment variables
-│   │   ├── package.json
-│   │   └── ...
-│   ├── frontend/          # React frontend
-│   │   ├── src/components # React components (Dashboard, etc.)
-│   │   ├── public/
-│   │   ├── package.json
-│   │   └── ...
-│
-│── mock-bank/             # Mock Bank service
-│   ├── data/bills.json    # Local JSON store
-│   ├── server.js          # Express mock server
-│   ├── package.json
-│   └── ...
-│
-│── postman/               # Postman test collection
-│── README.md              # Project documentation
-
-Setup Instructions
-1. Clone the Repository
-git clone <your-repo-url>
-cd FINAL_ASSESMENT
-
-2. Backend Setup (waterbillpayments/backend)
-cd waterbillpayments/backend
+# Backend
+cd backend
 npm install
 
-Environment Variables (.env)
+# Frontend
+cd ../frontend
+npm install
 
-Create a .env file inside backend/:
-
-# Database
-DB_NAME=waterbills
-DB_USER=root
-DB_PASS=yourpassword
-DB_HOST=localhost
-DB_DIALECT=mysql
-
-# Server
-PORT=4000
-
-# Cashfree
-CASHFREE_APP_ID=your_cashfree_app_id
-CASHFREE_CLIENT_SECRET=your_cashfree_secret
-
-# Email (example SMTP settings)
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USER=your-email@gmail.com
-SMTP_PASS=your-email-password
-
-Run Backend
+Run
+Backend
+cd backend
 npm start
 
 
-Server runs at:
+Runs at http://localhost:4000
+.
 
-http://localhost:4000
-
-3. Frontend Setup (waterbillpayments/frontend)
-cd waterbillpayments/frontend
-npm install
-
-Run Frontend
+Frontend
+cd frontend
 npm start
 
 
-Frontend runs at:
+Runs at http://localhost:3000
+.
 
-http://localhost:3000
+Mock Bank
 
-4. Mock Bank Setup (mock-bank)
+The mock bank simulates external bill updates and reads from mock-bank/data/bills.json.
+
 cd mock-bank
 npm install
 npm start
 
 
-Mock Bank runs at:
+Runs at http://localhost:5000
+.
 
-http://localhost:4001
+MailHog (local email testing)
 
-Running Tests
+Install MailHog
+ and run:
 
-Backend includes unit and integration tests (using Jest + Supertest).
-For tests, an in-memory SQLite database is used.
+mailhog
 
-cd waterbillpayments/backend
-NODE_ENV=test npm test
 
-Example Flow
+Web UI: http://localhost:8025
 
-Create a bill via backend API.
+SMTP Server: localhost:1025
 
-Generate a payment link.
+Ngrok (webhook testing)
 
-Use Mock Bank to simulate marking a bill as paid.
+To expose your backend for Cashfree webhook simulation:
 
-Cashfree webhook simulation updates bill status → Dashboard reflects the change.
+ngrok http 4000
 
-Notes
 
-The backend uses Sequelize migrations (sequelize.sync()) to manage schema.
+Ngrok will give you a public HTTPS URL (e.g., https://abcd1234.ngrok.io).
+Set this in Cashfree as your webhook URL:
 
-The mock-bank/data/bills.json file resets whenever the mock service restarts.
+https://abcd1234.ngrok.io/webhooks/cashfree
 
-Dashboard shows status timeline (CREATED → LINK_SENT → PAYMENT_PENDING → PAID/EXPIRED).
+Environment Variables
+
+Create a .env file in the backend folder:
+
+PORT=4000
+
+DB_NAME=waterbills
+DB_USER=root
+DB_PASS=yourpassword
+DB_HOST=127.0.0.1
+DB_DIALECT=mysql
+
+CASHFREE_CLIENT_ID=your_client_id
+CASHFREE_CLIENT_SECRET=your_client_secret
+
+SMTP_HOST=localhost
+SMTP_PORT=1025
+SMTP_USER=
+SMTP_PASS=
+
+DISABLE_WEBHOOK_SIGNATURE=true
+
+Test Commands
+
+Tests are inside backend/src/tests.
+
+Run all tests:
+
+cd backend
+npm test
+
+Architecture Diagram (ASCII)
+                   +----------------------+
+                   |      Frontend        |
+                   |   React Components   |
+                   |  (Dashboard, Forms)  |
+                   +----------+-----------+
+                              |
+                              | HTTP (REST API)
+                              v
+                   +----------+-----------+
+                   |       Backend        |
+                   | Express + Sequelize  |
+                   |   Controllers,       |
+                   |   Routes, Services   |
+                   +----------+-----------+
+                              |
+          +-------------------+--------------------+
+          |                                        |
+          v                                        v
++-----------------------+               +-----------------------+
+|      MySQL DB         |               |     Mock Bank JSON    |
+| Bills, Links, Trans.  |               | bills.json (testing)  |
++-----------------------+               +-----------------------+
+
+                   +----------------------+
+                   |   Cashfree Webhooks  |
+                   |  (success/pending/   |
+                   |   failed/user drop)  |
+                   +----------------------+
+
+                   +----------------------+
+                   |      MailHog         |
+                   | Local email testing  |
+                   +----------------------+
+
+                   +----------------------+
+                   |        Ngrok         |
+                   | Public webhook URL   |
+                   +----------------------+

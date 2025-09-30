@@ -70,8 +70,10 @@
     "base_amount": 550,
     "penalty_amount": 0,
     "total_amount": 550,
-    "status": "UNPAID",
-    "bank_ref": "BNKREF0005"
+    "status": "PAID",
+    "bank_ref": "BNKREF0005",
+    "payment_ref": "5114921081734",
+    "paid_at": "2025-09-30T09:57:58.000Z"
   },
   "TEST-BILL-123": {
     "bill_number": "TEST-BILL-123",
