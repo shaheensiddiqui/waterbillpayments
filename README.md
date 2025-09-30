@@ -1,7 +1,8 @@
 **Water Bill Payments**
 
 Overview
-A full-stack application for managing and paying water bills. The backend is built with Node.js, Express, and Sequelize (MySQL), while the frontend is built with React. The system supports bill creation, payment links, webhook handling, email notifications, and a dashboard with analytics.
+This project is a full-stack water bill payment management system with a React frontend and an Express + Sequelize (MySQL) backend. Operators can search and view bills, generate Cashfree payment links, and email those links to customers. Customers pay through the payment link, and the backend reconciles the transaction by handling Cashfree webhooks. On successful payment, the bill status is updated to PAID, the transaction is recorded, and the Mock Bank JSON store is updated to reflect the cleared bill.
+
 
 **Setup**
 
@@ -109,41 +110,4 @@ cd backend
 
 npm test
 
-**Architecture Diagram (ASCII)**
 
-                   +----------------------+
-                   |      Frontend        |
-                   |   React Components   |
-                   |  (Dashboard, Forms)  |
-                   +----------+-----------+
-                              |
-                              | HTTP (REST API)
-                              v
-                   +----------+-----------+
-                   |       Backend        |
-                   | Express + Sequelize  |
-                   |   Controllers,       |
-                   |   Routes, Services   |
-                   +----------+-----------+
-                              |
-          +-------------------+--------------------+
-          |                                        |
-          v                                        v
- +-----------------------+               +-----------------------+
-|      MySQL DB         |               |     Mock Bank JSON    |
-| Bills, Links, Trans.  |               | bills.json (testing)  |
-+-----------------------+               +-----------------------+
-
-                   +----------------------+
-                   |   Cashfree Webhooks  |
-                   |  (success/pending/   |
-                   |   failed/user drop)  |
-                   +----------------------+
-
-                   +----------------------+
-                   |      MailHog         |
-                   | Local email testing  |
-                   +----------------------+
-                   
-
-                   
