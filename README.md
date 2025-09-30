@@ -110,5 +110,36 @@ cd backend
 
 npm test
 
+**Screenshots**
+
+Enter a bill id
+
+<img width="1467" height="755" alt="Screenshot 2025-09-30 at 3 27 08 PM" src="https://github.com/user-attachments/assets/664d1939-e4b2-413e-9483-ef52314c72fa" />
+
+Fetch Bill
+
+<img width="1469" height="802" alt="Screenshot 2025-09-30 at 3 27 21 PM" src="https://github.com/user-attachments/assets/78b9d7eb-7728-4d76-8868-d2ea098f213c" />
+
+Send email 
+
+<img width="797" height="334" alt="Screenshot 2025-09-30 at 3 27 27 PM" src="https://github.com/user-attachments/assets/ac247fd4-2b0d-4bfe-be30-00768a5ae0f8" />
+
+Pay from mailhog which simulates what the customer sees
+
+<img width="912" height="716" alt="image" src="https://github.com/user-attachments/assets/2a4610a3-fbba-4144-b97c-945afb6205f9" />
+
+
+Pay through cashfree api 
+
+<img width="639" height="749" alt="Screenshot 2025-09-30 at 3 28 08 PM" src="https://github.com/user-attachments/assets/9fdd9448-e97b-48a5-aaab-fe113b0d29ab" />
+
+<img width="505" height="758" alt="Screenshot 2025-09-30 at 3 28 16 PM" src="https://github.com/user-attachments/assets/36246353-d07a-4eaf-8949-bcf9ba63f379" />
+
+Database and mock-bank api uploaded with paid status
+
+<img width="955" height="485" alt="Screenshot 2025-09-30 at 3 28 26 PM" src="https://github.com/user-attachments/assets/3f20aed2-acce-42a5-9db8-4e01a777f0e4" />
+
+
+
 
 
