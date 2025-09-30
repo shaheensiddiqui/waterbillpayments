@@ -1,0 +1,67 @@
+{
+  "info": {
+    "name": "Water Bill Payments",
+    "_postman_id": "abcd-efgh-1234-5678",
+    "description": "Collection for Water Bill Payments Assessment",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Get All Bills",
+      "request": {
+        "method": "GET",
+        "url": "{{backend_url}}/api/bills"
+      }
+    },
+    {
+      "name": "Get Bill by Number",
+      "request": {
+        "method": "GET",
+        "url": "{{backend_url}}/api/bills/{{bill_number}}"
+      }
+    },
+    {
+      "name": "Create Payment Link",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"bill_number\": \"{{bill_number}}\" }"
+        },
+        "url": "{{backend_url}}/api/payment-links"
+      }
+    },
+    {
+      "name": "Webhook (Simulate Success)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"type\": \"PAYMENT_SUCCESS_WEBHOOK\", \"data\": { \"order\": { \"order_tags\": { \"link_id\": \"link1080231633Xyz123\" } }, \"payment\": { \"cf_payment_id\": \"CF_TEST123\", \"payment_amount\": 740, \"payment_currency\": \"INR\", \"payment_status\": \"SUCCESS\", \"bank_reference\": \"BNKREFTEST123\", \"payment_time\": \"2025-09-30T10:00:00+05:30\" } } }"
+        },
+        "url": "{{backend_url}}/api/webhook/cashfree"
+      }
+    },
+    {
+      "name": "Mock Bank - Get Bill",
+      "request": {
+        "method": "GET",
+        "url": "{{mockbank_url}}/mock-bank/bills/{{bill_number}}"
+      }
+    },
+    {
+      "name": "Mock Bank - Mark Paid",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"payment_ref\": \"CF_TEST123\", \"paid_amount\": 740, \"paid_at\": \"2025-09-30T10:00:00+05:30\" }"
+        },
+        "url": "{{mockbank_url}}/mock-bank/bills/{{bill_number}}/mark-paid"
+      }
+    }
+  ]
+}
