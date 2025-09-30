@@ -1,0 +1,81 @@
+/* Reset & base styles */
+body, html, #root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f9fafc;
+  color: #333;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Header */
+.header {
+  background: #0d6efd;               /* richer blue */
+  color: white;
+  text-align: center;
+  padding: 2.2rem 1rem 1.6rem;        /* slightly tighter bottom padding */
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+.header h1 {
+  margin: 0;
+  font-size: 2rem;
+  letter-spacing: 0.2px;
+  font-weight: 700;
+}
+.header p {
+  margin: 0.5rem 0 0;
+  font-size: 0.98rem;
+  opacity: 0.95;
+}
+
+/* Navbar */
+.navbar {
+  display: flex;
+  justify-content: center;
+  gap: 0.8rem;
+  background: white;
+  padding: 0.9rem 1rem;
+  border-bottom: 1px solid #eef1f4;
+}
+.navbar button {
+  padding: 0.7rem 1.4rem;
+  border: none;
+  border-radius: 8px;
+  background: #f3f4f6;
+  cursor: pointer;
+  font-size: 0.98rem;
+  transition: background 0.2s ease, transform 0.05s ease;
+}
+.navbar button:hover { background: #e7e9ee; }
+.navbar button:active { transform: translateY(1px); }
+.navbar button.active {
+  background: #0d6efd;
+  color: white;
+}
+
+/* Main Content */
+.main {
+  flex: 1;
+  display: flex;
+  justify-content: center;    /* center horizontally */
+  align-items: flex-start;     /* 👈 raise the panel (top-align vertically) */
+  padding: 1.25rem 1rem;       /* slightly tighter vertical padding */
+}
+
+/* Card */
+.card {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+  width: 100%;
+  max-width: 640px;            /* a touch wider for breathing room */
+  margin-top: 1.25rem;         /* small gap below navbar */
+  border: 1px solid #eef1f4;   /* subtle edge to pop off background */
+}
